@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<link
+			crossorigin="anonymous"
+			href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.5.0/css/reveal.min.css"
+			integrity="sha384-i6oJaSoP79kEYs1DhHKosHHPiwzdeWkSt2gvzUYkS5/a89iW2jiJf/3fhnZMjRjK"
+			rel="stylesheet">
+		<link
+			crossorigin="anonymous"
+			href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.5.0/css/theme/black.min.css"
+			integrity="sha384-uKhA8m3WWTDymeJp888dxCEA83RAVn4ZAzyCyO2tRGVKyd5CLA8hgaybjNNJdRCV"
+			rel="stylesheet">
+		<meta charset="UTF-8">
+		<title>分散型ではなく連合としてのMastodon</title>
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h1>分散型ではなく連合としてのMastodon</h1>
+					<address>Akihiko Odaki
+						&lt;<a href="mailto:nekomanma@pixiv.co.jp">nekomanma@pixiv.co.jp</a>&gt;</address>
+					<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="license" style="display: block"><img alt="クリエイティブ・コモンズ・ライセンス" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" style="border-width: 0" /></a>
+					この 作品 (<code>index.html</code>) は
+					<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="license">クリエイティブ・コモンズ 表示 - 継承 4.0 国際 ライセンス</a>の下に提供されています. 表示される画像等はそれぞれのライセンスに従います.
+				</section>
+				<section>
+					<h1><code style="text-transform: none">whoami</code></h1>
+					<dl>
+						<dt><img alt="logo" src="logo250c.png" style="border-width: 0; height: 1em; margin: 0">神楽坂一丁目通信局</dt>
+						<dd>2015年10月-: Prog部員. 2016年10月-: Web部長</dd>
+						<dt>Data Direct Networks</dt>
+						<dd>2017年4月-6月: インターン</dd>
+						<dt>pixiv</dt>
+						<dd>2017年7月-: アルバイト</dd>
+					</dl>
+					<p>* どれも今回の発表内容とは関係ない</p>
+				</section>
+				<section>
+					<h1><code style="text-transform: none">whoami</code></h1>
+					<ul>
+						<li><a href="https://kagucho.net/">TsuboneSystem</a> (AGPL-3.0+)</li>
+						<li><a href="https://o.kagucho.net/">Mastodonインスタンス o.kagucho.net</a> (AGPL-3.0)</li>
+						<li><img alt="Grafana" src="logo_transparent_400x.png" style="border-width: 0; height: 1em; vertical-align: middle"></img> (Apache-2.0)</li>
+						<li>collectdプラグイン (GPL-2.0)</li>
+						<li><img alt="Pawoo" src="logo_pawoo.png" style="border-width: 0; height: 1em; vertical-align: middle"></img> (AGPL-3.0)</li>
+						<li><img alt="Mastodon" src="logo_full.svg" style="border-width: 0; height: 1em; vertical-align: middle"></img> (AGPL-3.0)</li>
+						<li><img alt="gears" src="gears.png" style="border-width: 0; height: 1em; vertical-align: middle"></img>The Mesa 3D Graphics Library (MIT)</li>
+						<li>PixiJS (MIT)</li>
+					</ul>
+				</section>
+				<section>
+					<h1>分散</h1>
+					<dl>
+						<dt>分散させる (distribute)</dt>
+						<dd>1つだったもの (<i>Twitter</i>)
+							を分け, 散り散りにする</dd>
+					</dl>
+				</section>
+				<section>
+					<h1>本当に, <br><i>1つ</i><br>だったのか</h1>
+				</section>
+				<section>
+					<h1>Activity Vocabulary</h1>
+					<p>Actvitiy Vocabularyは, SNS上のデータ,
+						<span style="white-space: nowrap"><i>activity</i> (人々の活動)</span>
+						を表現する規格, <span style="white-space: nowrap">Activity Streams</span>で<span style="white-space: nowrap">用いられる</span>語彙. <a href="#/references">[Activity Vocabulary]</a></p>
+				</section>
+				<section>
+					<h1>Activity Vocabulary</h1>
+					<p>Object Types. <a href="#/references">[Activity Vocabulary]</a></p>
+					<ul>
+						<li>Article</li>
+						<li>Audio</li>
+						<li>Document</li>
+						<li>Event</li>
+						<li>Image</li>
+						<li>Note</li>
+						<li>Page</li>
+						<li>Place</li>
+						<li>Profile</li>
+						<li>Relationship</li>
+						<li>Tombstone</li>
+						<li>Video</li>
+					</ul>
+				</section>
+				<section>
+					<h1>ActivityPubの<span style="white-space: nowrap">『スコープ』</span></h1>
+					<p>Activity Streamsを配信し, 『連合』を構築する<span style="white-space: nowrap">仕組みは</span>必ずしも全てのActivity Vocabularyに対応<i style="white-space: nowrap">しない</i>.</p>
+					<p>それでもなお, Twitterよりも広い.
+						Twitterはマイクロブログサービスとしての要素さえも<i>全て</i>を<span style="white-space: nowrap">含む</span><span style="white-space: nowrap">わけ</span>でない.</p>
+				</section>
+				<section>
+					<h1>連合の『スコープ』</h1>
+					<dl>
+						<dt>140字? 500字?</dt>
+						<dd>規格上の制限はない.</dd>
+						<dt>Note (トゥート) を共有するためのもの?</dt>
+						<dd>例えばPawooは? (pixiv cardを共有する)<br>Pawoo Musicは? (音楽を共有する)</dd>
+					</dl>
+				</section>
+				<section>
+					<h1>分散ではない,<span style="white-space: nowrap">『連合』</span></h1>
+					<p>Twitterという, 1つの<i>パイ</i>を奪いあうものではない.</p>
+					<p>多くのSNSに分散した<i>世界</i>を1つにするための技術.</p>
+				</section>
+				<section>
+					<h1>分散の例</h1>
+					<dl>
+						<dt>BitTorrent</dt>
+						<dd>同じ情報を分散させる</dd>
+						<dt>BitCoin</dt>
+						<dd>同じ通貨を分散させる</dd>
+						<dt>BOINC</dt>
+						<dd>同じ演算問題を共有する</dd>
+					</dl>
+					<p>分散されたデータは相互に置換可能</p>
+				</section>
+				<section>
+					<h1>連合の例</h1>
+					<dl>
+						<dt>インターネット</dt>
+						<dd>異なる目的を持ったコンピュータが繋がる</dd>
+						<dt>World Wide Web</dt>
+						<dd>異なる情報がハイパーリンクによって繋がる</dd>
+					</dl>
+				</section>
+				<section>
+					<h1>挑戦</h1>
+				</section>
+				<section>
+					<h1>WWWとの連携</h1>
+					<p>既存の連合としてのWorld Wide Webを尊重すること</p>
+					<dl>
+						<dt><a href="https://akihikodaki.github.io/activity-intent/scheme.html">URL Scheme for Activity Streams 2.0</a>, <a href="https://github.com/tootsuite/mastodon/pull/4511">web+mastodon scheme</a></dt>
+						<dd>連合たるWWWにハイパーリンクで接続する</dd>
+						<dt>HTML埋め込み対応</dt>
+						<dd>共有の仕組みの1つとして無視することは<span style="white-space: nowrap">できない</span></dd>
+						<dt>トゥート内のactivityへのリンクの対応の改善</dt>
+						<dd>連合の機能を統合できていない</dd>
+					</dl>
+				</section>
+				<section>
+					<h1>ActivityPubでの<span style="white-space: nowrap">寛容,</span> 相互理解</h1>
+					<p>異質なものが存在しうる連合に対応すること</p>
+					<dl>
+						<dt>DoSなどの攻撃の寛容</dt>
+						<dd>悪意は存在する</dd>
+						<dt>拡張実装への寛容</dt>
+						<dd>Mastodonとは異なる目的は存在する</dd>
+						<dt>標準化</dt>
+						<dd>Mastodonと繋がる他の実装は存在する</dd>
+					</dl>
+				</section>
+				<section>
+					<h1>ここから妄想</h1>
+				</section>
+				<section>
+					<h1>Activity Vocabularyのより広範なサポート</h1>
+					<p>Pawooで扱う画像はサポートされている</p>
+					<p>Pawoo Musicで扱う音楽は動画に変換</p>
+					<p>他のサービスではより異なる種類のactivityが?</p>
+				</section>
+				<section>
+					<h1>WWWの機能に<span style="white-space: nowrap">注目する</span></h1>
+					<ul>
+						<li>誰もが情報を編纂することができる</li>
+						<li>ハイパーリンクによって繋がる</li>
+					</ul>
+				</section>
+				<section>
+					<h1><span style="white-space: nowrap">Actvitiy</span><span style="white-space: nowrap">Collection</span></h1>
+					<p>TwitterモーメントやTogetterと同質</p>
+					<p>Activitiesをまとめることで, 容易に<i>collection</i>を<span style="white-space: nowrap">作成できる</span></p>
+					<p>Activity Streams 2.0の
+						<a href="https://www.w3.org/TR/activitystreams-core/#collection"><code>Collection</code></a>
+						objectを用いる</p>
+				</section>
+				<section>
+					<h1>Hyper Activity</h1>
+					<p>WebFingerを拡張</p>
+					<dl>
+						<dt>Noteへのリンク</dt>
+						<dd>fn_aki@pawoo.net/im_writing_slides_now</dd>
+						<dt>Collectionへのリンク</dt>
+						<dd><code>fn_aki@pawoo.net/cats</code></dd>
+					</dl>
+					<p>idをつけるをユーザーに求めるのは<span style="white-space: nowrap">マイクロブログの</span>気軽さを失わせてしまうのでは?</p>
+					<p>ユーザーにidを割り当てることが受け入れられて<span style="white-space: nowrap">いる</span>し問題はない?</p>
+				</section>
+				<section>
+					<h1>検索エンジン</h1>
+					<p>既にいくつかある</p>
+					<p>プライバシー? → 情報は公開されているということを教化する必要</p>
+				</section>
+				<section>
+					<h1>実際難しい</h1>
+					<img src="https://upload.wikimedia.org/wikipedia/commons/a/af/Confusion_of_Tongues.png"></img>
+				</section>
+				<section>
+					<h1>独自拡張</h1>
+					<p>例: <code>web+mastodon</code> scheme</p>
+					<p>Mastodonが大多数を占める現状では問題ないが…?</p>
+					<p>GNU Socialは?</p>
+				</section>
+				<section>
+					<h1>規格の欠如</h1>
+					<p>OStatusはGNU Social互換の実装を作成するために十分ではない</p>
+					<p>GNU Socialの実際の動作を観察することで<span style="white-space: nowrap">開発された</span>Mastodon</p>
+					<p>予期せぬ退行, 統合した際のセキュリティ上の問題が発生</p>
+				</section>
+				<section>
+					<h1>過去のプロトコルとの互換性</h1>
+					<p>例: ActivityPubとOStatus</p>
+					<p>とても辛そう (よく知らない)</p>
+				</section>
+				<section>
+					<h1>ユーザーの教化</h1>
+					<p>「中央集権でない」というだけで惹きつけられるユーザーは僅か</p>
+				</section>
+				<section>
+					<h1>それでも</h1>
+					<p>「立ち止まることと、諦めることは同義だ」</p>
+					<p>Twitterと同じスコープでは、その強力なライバルに打ち負かされる</p>
+					<p>→ 分散に留まり続けていたら死ぬ</p>
+					<p>連合を活かそう</p>
+				</section>
+				<section>
+					<h1>参照</h1>
+					<dl>
+						<dt>[Activity Vocabulary]</dt>
+						<dd>James M Snell; Evan Prodromou. W3C. URL:
+							<a href="https://www.w3.org/TR/activitystreams-vocabulary/">https://www.w3.org/TR/activitystreams-vocabulary/</a></dd>
+					</dl>
+				</section>
+				<section>
+					<h1>ライセンス</h1>
+					<dl>
+						<dt><a href="index.html"><code>index.html</code></a></dt>
+						<dd>Akihiko Odakiにより, <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="license">クリエイティブ・コモンズ 表示 - 継承 4.0 国際 ライセンス</a>の下に提供されています.</dd>
+						<dt><a href="gears.png"><code>gears.png</code></a></dt>
+						<dd>Brian Paul氏により<a href="LICENSE_GEARS.TXT">MITライセンス</a>の下に提供されています.</dd>
+					</dl>
+				</section>
+				<section>
+					<h1>ライセンス</h1>
+					<dl>
+						<dt><a href="logo250c.png"><code>logo250c.png</code></a></dt>
+						<dd>神楽坂一丁目通信局により, <a href="agpl-3.0.html">AGPL-3.0</a>の下に提供されています.</dd>
+						<dt><a href="logo_full.svg"><code>logo_full.svg</code></a></dt>
+						<dd>Gargron氏により, <a href="agpl-3.0.html">AGPL-3.0</a>の下に提供されています.</dd>
+					</dl>
+				</section>
+				<section>
+					<h1>ライセンス</h1>
+					<dl>
+						<dt><a href="logo_pawoo.png"><code>logo_pawoo.png</code></a></dt>
+						<dd>pixiv株式会社により, <a href="agpl-3.0.html">AGPL-3.0</a>の下に提供されています.</dd>
+						<dt><a href="logo_transparent_400x.png"><code>logo_transparent_400x.png</code></a></dt>
+						<dd>Raintank Inc.により, <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache-2.0</a>の下に提供されています.</dd>
+					</dl>
+				</section>
+			</div>
+		</div>
+		<script
+			crossorigin="anonymous"
+			integrity="sha384-B50YLPnNFrPfHyhGGRU4zxA7CrsohSuCgHXdcPGJz0dy+4JMUL36kdK51a5qxy6F"
+			src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.5.0/js/reveal.min.js">
+		</script>
+		<script>Reveal.initialize();</script>
+	</body>
+</html>
